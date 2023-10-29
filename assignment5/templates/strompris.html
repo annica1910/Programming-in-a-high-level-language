@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Strømpris</title>
+    <h1>Hva er strømprisen?</h1>
+    <style>
+      h1 {
+        background-color: #141e30;
+        width: 100%;
+        padding: 10px;
+        text-align: center;
+        margin:0;
+      }
+      body {
+        margin: 0;
+        font-family: Helvetica, Arial, sans-serif;
+        color: #3C454C;
+        background: linear-gradient(#141e30, #384c62);
+        color : white;
+        text-align: center;
+      }
+
+      .error {
+        color: red;
+      }
+
+      form {
+        width: 300px;
+        padding: 20px;
+        margin-left: 40%;
+        box-sizing: border-box;
+        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.5);
+      }
+      input {
+        margin: 10px;
+        padding: 10px;
+      }
+      .locInput {
+        display: block;
+        cursor: pointer;
+      }
+      input[type=checkbox]:hover {
+        background: gray;
+      }
+      input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        margin: 0px;
+      }
+      input[type=checkbox]:checked:before {
+        background: #fff;
+      }
+      input[type=checkbox]:checked:after {
+        background: #50565a;
+      }
+
+      .topnav {
+        overflow: hidden;
+      }
+
+      .topnav a {
+        float: left;
+        color: #f2f2f2;
+        text-align: center;
+        padding: 14px 16px;
+        text-decoration: none;
+        font-size: 17px;
+      }
+
+      .topnav a:hover {
+        background-color: #6f5f9c;
+        color: black;
+      }
+
+      .topnav a.active {
+        background-color: #3e2f78;
+        color: white;
+      }
+    </style>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm//vega@5"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm//vega-lite@5.6.0"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm//vega-embed@6"
+    ></script>
+  </head>
+  <body>
+    <!-- Add Navigation Bar to Docs.
+    -->
+    <div class="topnav">
+      <a class="active" href="/">Home</a>
+      <a href="/docs">FastAPI Docs</a>
+      <a href="/help">Help</a>
+    </div>
+
+    <p>The dataset is loaded from: <a href="https://www.hvakosterstrommen.no/api/v1/prices/2022/11-06_NO3.json">www.hvakosterstrommen.no</a></p>
+    
+    <div id="vis"></div>
+    <!-- Create Form -->
+    <form action="javascript:refreshPlot()" id="price-form">
+
+      <label for="date">Select an enddate:</label>
+      <input type="date" id="end" name="end" value="2022-10-22" min="2022-10-02" max="2022-11-20" /><br>
+
+      <label for="days">Select days:</label>
+      <input type="number" id="days" name="days" value="7" min="1" max="10" /><br>
+
+      <label for="locations">Select location:</label><br>
+
+      <label class="locInput">
+        <input type="checkbox" id="loc1" name="locations" value="NO1"/>
+        Oslo </label><br>
+      <label class="locInput">
+        <input type="checkbox" id="loc2" name="locations" value="NO2"/>
+        Kristiansand </label><br>
+      <label class="locInput">
+        <input type="checkbox" id="loc3" name="locations" value="NO3"/>
+        Trondheim </label><br>
+      <label class="locInput">
+        <input type="checkbox" id="loc4" name="locations" value="NO4"/>
+        Tromsø </label><br>
+      <label class="locInput">
+        <input type="checkbox" id="loc5" name="locations" value="NO5"/>
+        Bergen </label><br>
+        <button type="submit">Refresh</button>
+    </form>
+
+    <script type="text/javascript">
+      async function refreshPlot() {
+        // begin constructing URL to request the plot JSON
+        const plotUrl = new URL(
+          `${document.location.protocol}//${document.location.host}/plot_prices.json`
+        );
+
+        // get inputs from the form
+        
+        // get selected location checkboxes
+        for (checkbox of document
+          .getElementById("price-form")
+          .querySelectorAll("input[name=locations]")) {
+          if (checkbox.checked) {
+            plotUrl.searchParams.append("locations", checkbox.value);
+          }
+        }
+        var endInput = document.getElementById("end");
+        if (endInput) {
+          plotUrl.searchParams.append("end", endInput.value);
+        } else {
+          console.warn('No input with id="end"');
+        }
+
+        var daysInput = document.getElementById("days");
+        if (daysInput) {
+          plotUrl.searchParams.append("days", daysInput.value);
+        } else {
+          console.warn('No input with id="days"');
+        }
+
+        console.log(`requesting new chart from ${plotUrl.href}`);
+        var response = await fetch(plotUrl.href);
+        var spec = await response.json();
+
+        var embedOpt = { mode: "vega-lite" };
+
+        function showError(el, error) {
+          el.innerHTML =
+            '<div class="error" style="color:red;">' +
+            "<p>JavaScript Error: " +
+            error.message + 
+            "</p>" +
+            "<p>This usually means there's a typo in your chart specification. " +
+            "See the javascript console for the full traceback.</p>" +
+            "</div>";
+          throw error;
+        }
+        const el = document.getElementById("vis");
+        vegaEmbed("#vis", spec, embedOpt).catch((error) =>
+          showError(el, error)
+        );
+      }
+      refreshPlot();
+    </script>
+  </body>
+</html>

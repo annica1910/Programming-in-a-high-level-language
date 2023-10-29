@@ -1,0 +1,4 @@
+Time perfomance using file assignment3/test/rain.jpg: 400x600
+Reference (pure Python) filter time color2gray: 1.74s (calls=3)
+Timing: numpy color2gray: 1.34s (speedup=1.30x)
+Timing: numba color2gray: 2.42s (speedup=0.72x)
